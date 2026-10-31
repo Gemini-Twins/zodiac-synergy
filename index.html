@@ -59,7 +59,7 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:16px;border-to
 <body>
 <header><div class="wrap">
   <h1>ZODIAC SYNERGY</h1>
-  <p class="sub">Astrological alignment &amp; creative collaboration</p>
+  <p class="sub">Astrological alignment &amp; business collaboration</p>
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-analyzer" aria-selected="true">✨ Analyzer</button>
     <button class="tab" role="tab" id="tab-board" aria-selected="false">👥 Community board</button>
@@ -67,11 +67,22 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:16px;border-to
 </div></header>
 
 <main>
+  <div class="card" id="welcome" hidden>
+    <div class="eyebrow">Welcome</div>
+    <h2>What is Zodiac Synergy?</h2>
+    <p class="mute">A place for business owners to connect, using star signs as a fun way to start the conversation.</p>
+    <ul class="mute" style="margin:10px 0 0;padding-left:18px">
+      <li><strong>Analyzer:</strong> see how two signs might work together.</li>
+      <li><strong>Business feed:</strong> post your business and find partners, suppliers or customers.</li>
+      <li><strong>Private numbers:</strong> nobody sees your WhatsApp number unless you approve their request.</li>
+    </ul>
+    <div class="actions"><button class="btn" id="welcome-ok" type="button">Got it</button></div>
+  </div>
   <section id="view-analyzer" style="display:grid;gap:14px">
     <div class="card">
       <div class="eyebrow">Element synergy matrix</div>
       <h2>Test your cosmic alignment</h2>
-      <p class="mute">Pick two signs to see how their elements and modalities might work together on a project. Just for fun, not a prediction.</p>
+      <p class="mute">Pick two signs to see how their elements and modalities might work together in business. Just for fun, not a prediction.</p>
     </div>
     <div class="card">
       <label for="sign-a">First sign</label>
@@ -96,28 +107,29 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:16px;border-to
 
   <section id="view-board" hidden style="display:grid;gap:14px">
     <div class="row" style="align-items:center">
-      <div><h2 style="margin:0">Collaboration feed</h2><p class="mute">Find aligned partners for your next project</p></div>
+      <div><h2 style="margin:0">Business feed</h2><p class="mute">Find aligned partners for your business</p></div>
       <button class="btn" id="open-post">+ Post</button>
     </div>
+    <div id="reqs" style="display:grid;gap:12px"></div>
     <div class="pills" id="pills"></div>
     <div id="list" style="display:grid;gap:12px"></div>
     <p id="status" class="mute" role="status"></p>
-    <p class="mute" style="font-size:12px">Listings are shared with everyone who opens this board. Only post a number you are happy to make public.</p>
+    <p class="mute" style="font-size:12px">Your number stays private. People can request it, and you choose who gets it. Check this page for requests.</p>
   </section>
 </main>
 
 <div id="modal" hidden>
   <form class="card dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title" id="post-form" novalidate>
-    <div class="row" style="align-items:center"><h2 id="dlg-title" style="margin:0">New collaboration post</h2><button type="button" class="btn ghost" id="close-post" aria-label="Close" style="padding:0 12px">✕</button></div>
+    <div class="row" style="align-items:center"><h2 id="dlg-title" style="margin:0">New business post</h2><button type="button" class="btn ghost" id="close-post" aria-label="Close" style="padding:0 12px">✕</button></div>
     <div><label for="p-name">Name or handle</label><input type="text" id="p-name" maxlength="30" autocomplete="off"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div><label for="p-sign">Your sign</label><select id="p-sign"></select></div>
       <div><label for="p-seek">Seeking element</label>
         <select id="p-seek"><option>Fire</option><option>Earth</option><option>Air</option><option>Water</option></select></div>
     </div>
-    <div><label for="p-desc">Project or skill offer</label><textarea id="p-desc" rows="3" maxlength="200" placeholder="What are you building?"></textarea></div>
+    <div><label for="p-desc">Your business</label><textarea id="p-desc" rows="3" maxlength="200" placeholder="What is your business?"></textarea></div>
     <div><label for="p-wa">WhatsApp number (South Africa)</label><input type="text" id="p-wa" inputmode="tel" placeholder="e.g. 071 234 5678"></div>
-    <label class="chk"><input type="checkbox" id="p-ok"><span>I understand my number will be visible to anyone who opens this board and I agree to that.</span></label>
+    <label class="chk"><input type="checkbox" id="p-ok"><span>I agree to share my number only with people whose request I approve.</span></label>
     <div class="err" id="err" role="alert"></div>
     <button class="btn" type="submit">Publish listing</button>
   </form>
@@ -128,7 +140,7 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:16px;border-to
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,signInAnonymously,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,collection,addDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,collection,addDoc,deleteDoc,doc,query,orderBy,limit,where,onSnapshot,serverTimestamp,writeBatch,getDoc,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAuHSKjjv-9ynHEyzpV2bHkl78lcr3ugW8",
@@ -178,7 +190,12 @@ const COL="zodiacListings";
 let uid=null,posts=[],filter="All";
 const setStatus=m=>{$("status").textContent=m};
 
-onAuthStateChanged(auth,u=>{uid=u?u.uid:null;renderList()});
+let reqIn=[],reqOut=[],subbed=false;
+onAuthStateChanged(auth,u=>{uid=u?u.uid:null;
+  if(u&&!subbed){subbed=true;
+    const R=collection(db,"zodiacRequests"),on=(f,set)=>onSnapshot(query(R,where(f,"==",uid)),x=>{set(x.docs.map(d=>({id:d.id,...d.data()})));renderList();renderReqs()},()=>{});
+    on("ownerUid",x=>reqIn=x);on("reqUid",x=>reqOut=x);}
+  renderList();renderReqs()});
 signInAnonymously(auth).catch(()=>setStatus("Couldn’t connect. Check your internet and reload."));
 onSnapshot(query(collection(db,COL),orderBy("createdAt","desc"),limit(50)),
   snap=>{posts=snap.docs.map(d=>({id:d.id,...d.data()}));setStatus("");renderList()},
@@ -216,15 +233,37 @@ function renderList(){
     const act=h("div","actions");
     if(uid&&l.uid===uid){
       const rm=h("button","btn ghost","Remove");rm.type="button";
-      rm.onclick=async()=>{rm.disabled=true;try{await deleteDoc(doc(db,COL,l.id))}catch(e){rm.disabled=false;setStatus("Couldn’t remove that listing.")}};
+      rm.onclick=async()=>{rm.disabled=true;try{const b=writeBatch(db);b.delete(doc(db,COL,l.id));b.delete(doc(db,"zodiacPrivate",l.id));await b.commit()}catch(e){rm.disabled=false;setStatus("Couldn’t remove that listing.")}};
       act.appendChild(rm);
+    }else{
+      const r=reqOut.find(x=>x.listingId===l.id);
+      if(r&&r.status==="approved"&&/^27\d{9}$/.test(r.ownerWa||"")){
+        const a=h("a","wa","WhatsApp connect");a.href="https://wa.me/"+r.ownerWa+"?text="+encodeURIComponent("Hi "+l.name+", I saw your listing on Zodiac Synergy Matcher.");a.target="_blank";a.rel="noopener noreferrer";act.appendChild(a);
+      }else if(r){const a=h("span","wa","Request sent");a.setAttribute("aria-disabled","true");act.appendChild(a)}
+      else{const b=h("button","btn","Request contact");b.type="button";b.onclick=()=>requestContact(l);act.appendChild(b)}
     }
-    const a=h("a","wa");
-    if(/^27\d{9}$/.test(l.wa||"")){
-      a.href="https://wa.me/"+l.wa+"?text="+encodeURIComponent("Hi "+l.name+", I saw your listing on Zodiac Synergy Matcher.");
-      a.target="_blank";a.rel="noopener noreferrer";a.textContent="WhatsApp connect";
-    }else{a.setAttribute("aria-disabled","true");a.textContent="No contact"}
-    act.appendChild(a);c.appendChild(act);box.appendChild(c);
+    c.appendChild(act);box.appendChild(c);
+  });
+}
+
+async function requestContact(l){
+  if(!uid)return setStatus("Still connecting. Try again in a moment.");
+  const name=(prompt("Your name:")||"").trim().slice(0,30);if(!name)return;
+  const wa=normWa(prompt("Your WhatsApp number (they see it if they approve):")||"");
+  if(!wa)return setStatus("Enter a valid South African number, like 071 234 5678.");
+  try{await addDoc(collection(db,"zodiacRequests"),{listingId:l.id,ownerUid:l.uid,reqUid:uid,reqName:name,reqWa:wa,status:"pending",createdAt:serverTimestamp()});setStatus("")}
+  catch(e){setStatus("Couldn’t send the request. Try again.")}
+}
+function renderReqs(){
+  const box=$("reqs");box.textContent="";
+  reqIn.filter(r=>r.status==="pending").forEach(r=>{
+    const c=h("div","card");
+    c.append(h("strong",null,"Contact request"),h("p","mute",r.reqName+" wants your WhatsApp number."));
+    const act=h("div","actions");
+    const no=h("button","btn ghost","Decline");no.type="button";no.onclick=()=>deleteDoc(doc(db,"zodiacRequests",r.id)).catch(()=>setStatus("Couldn’t decline."));
+    const ok=h("button","btn","Approve");ok.type="button";
+    ok.onclick=async()=>{ok.disabled=true;try{const p=await getDoc(doc(db,"zodiacPrivate",r.listingId));await updateDoc(doc(db,"zodiacRequests",r.id),{status:"approved",ownerWa:p.data().wa})}catch(e){ok.disabled=false;setStatus("Couldn’t approve. Try again.")}};
+    act.append(no,ok);c.appendChild(act);box.appendChild(c);
   });
 }
 
@@ -248,7 +287,10 @@ async function submit(e){
   if(!uid)return err("Still connecting. Try again in a moment.");
   const btn=$("post-form").querySelector("button[type=submit]");btn.disabled=true;
   try{
-    await addDoc(collection(db,COL),{name,sign:$("p-sign").value,seeking:$("p-seek").value,desc,wa,uid,createdAt:serverTimestamp()});
+    const ref=doc(collection(db,COL)),b=writeBatch(db);
+    b.set(ref,{name,sign:$("p-sign").value,seeking:$("p-seek").value,desc,uid,createdAt:serverTimestamp()});
+    b.set(doc(db,"zodiacPrivate",ref.id),{uid,wa});
+    await b.commit();
     ["p-name","p-desc","p-wa"].forEach(i=>$(i).value="");$("p-ok").checked=false;
     filter="All";renderPills();renderList();closeModal();tab("board");
   }catch(x){err("Couldn’t post. Check your internet and try again.")}
@@ -269,7 +311,9 @@ $("open-post").onclick=openModal;$("close-post").onclick=closeModal;
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("modal").hidden)closeModal()});
 $("post-form").addEventListener("submit",submit);
-update();renderPills();renderList();
+try{if(!localStorage.getItem("zsm-welcome"))$("welcome").hidden=false}catch(e){$("welcome").hidden=false}
+$("welcome-ok").onclick=()=>{$("welcome").hidden=true;try{localStorage.setItem("zsm-welcome","1")}catch(e){}};
+update();renderPills();renderList();renderReqs();
 </script>
 </body>
 </html>

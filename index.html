@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zodiac Synergy Matcher</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f4ef;--card:#ffffff;--line:#e2ddd2;--text:#1c1917;--mute:#57534e;--acc:#b45309;--accbg:#fef3c7;--onacc:#ffffff;--field:#faf8f3;--wa:#15803d;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f19;--card:#1a2230;--line:#2c3646;--text:#f3f4f6;--mute:#b4bcc9;--acc:#fbbf24;--accbg:#3a2c0a;--onacc:#0b0f19;--field:#111827;--wa:#22c55e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0f19;--card:#1a2230;--line:#2c3646;--text:#f3f4f6;--mute:#b4bcc9;--acc:#fbbf24;--accbg:#3a2c0a;--onacc:#0b0f19;--field:#111827;--wa:#22c55e;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:10}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px}
+.wrap{max-width:460px;margin:0 auto}
+h1{margin:0;font-size:16px;font-weight:800;letter-spacing:.08em}
+.sub{margin:0 0 10px;font-size:12px;color:var(--mute)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--field);border:1px solid var(--line);padding:4px;border-radius:12px}
+.tab{min-height:44px;border:0;border-radius:9px;background:none;color:var(--mute);font:600 13px inherit;font-family:inherit;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--acc);color:var(--onacc)}
+main{flex:1;width:100%;max-width:460px;margin:0 auto;padding:16px;display:grid;gap:14px;align-content:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+h2{margin:2px 0 6px;font-size:18px}
+p{margin:0}
+.mute{color:var(--mute);font-size:13px}
+label{display:block;font-size:12px;font-weight:600;color:var(--mute);margin:0 0 4px}
+select,input[type=text],textarea{width:100%;min-height:44px;background:var(--field);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:500 14px inherit;font-family:inherit}
+textarea{resize:none}
+select:focus,input:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.chip{display:flex;gap:12px;align-items:center;margin-top:10px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.glyph{width:40px;height:40px;border-radius:10px;background:var(--accbg);display:grid;place-items:center;font-size:20px}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--accbg);color:var(--acc)}
+.big{font-size:30px;font-weight:800;color:var(--acc);line-height:1}
+h4{margin:0 0 2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.res{border-top:3px solid var(--acc);display:grid;gap:12px}
+.btn{min-height:44px;border:0;border-radius:12px;background:var(--acc);color:var(--onacc);font:700 13px inherit;font-family:inherit;padding:0 16px;cursor:pointer}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--mute)}
+.pills{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.pill{min-height:40px;white-space:nowrap;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--mute);font:600 13px inherit;font-family:inherit;padding:0 14px;cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--acc);color:var(--onacc);border-color:var(--acc)}
+.tag{display:inline-block;margin-top:4px;font-size:12px;padding:2px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.wa{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;background:var(--wa);color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+.wa[aria-disabled="true"]{background:var(--field);color:var(--mute);border:1px solid var(--line)}
+.actions{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+#modal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg{width:100%;max-width:380px;max-height:100%;overflow:auto;display:grid;gap:12px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--mute);font-weight:500}
+.chk input{width:20px;height:20px;margin:0;flex:none}
+.err{color:#dc2626;font-size:12px;min-height:16px}
+footer{text-align:center;font-size:12px;color:var(--mute);padding:16px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>ZODIAC SYNERGY</h1>
+  <p class="sub">Astrological alignment &amp; creative collaboration</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-analyzer" aria-selected="true">✨ Analyzer</button>
+    <button class="tab" role="tab" id="tab-board" aria-selected="false">👥 Community board</button>
+  </div>
+</div></header>
+
+<main>
+  <section id="view-analyzer" style="display:grid;gap:14px">
+    <div class="card">
+      <div class="eyebrow">Element synergy matrix</div>
+      <h2>Test your cosmic alignment</h2>
+      <p class="mute">Pick two signs to see how their elements and modalities might work together on a project. Just for fun, not a prediction.</p>
+    </div>
+    <div class="card">
+      <label for="sign-a">First sign</label>
+      <select id="sign-a"></select>
+      <div class="chip"><div class="glyph" id="ga"></div><div><strong id="ta"></strong><div class="mute" id="sa"></div></div></div>
+    </div>
+    <div class="card">
+      <label for="sign-b">Second sign</label>
+      <select id="sign-b"></select>
+      <div class="chip"><div class="glyph" id="gb"></div><div><strong id="tb"></strong><div class="mute" id="sb"></div></div></div>
+    </div>
+    <div class="card res" aria-live="polite">
+      <div class="row">
+        <div><span class="badge" id="badge"></span><h2 id="rtitle" style="margin-top:6px"></h2></div>
+        <div style="text-align:right"><div class="big" id="pct"></div><div class="mute" style="font-size:12px">Synergy score</div></div>
+      </div>
+      <div><h4>Workflow dynamic</h4><p id="rbody" class="mute"></p></div>
+      <div><h4>Modality note</h4><p id="rmod" class="mute"></p></div>
+      <div><h4>Balance tip</h4><p id="rtip" class="mute"></p></div>
+    </div>
+  </section>
+
+  <section id="view-board" hidden style="display:grid;gap:14px">
+    <div class="row" style="align-items:center">
+      <div><h2 style="margin:0">Collaboration feed</h2><p class="mute">Find aligned partners for your next project</p></div>
+      <button class="btn" id="open-post">+ Post</button>
+    </div>
+    <div class="pills" id="pills"></div>
+    <div id="list" style="display:grid;gap:12px"></div>
+    <p id="status" class="mute" role="status"></p>
+    <p class="mute" style="font-size:12px">Listings are shared with everyone who opens this board. Only post a number you are happy to make public.</p>
+  </section>
+</main>
+
+<div id="modal" hidden>
+  <form class="card dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title" id="post-form" novalidate>
+    <div class="row" style="align-items:center"><h2 id="dlg-title" style="margin:0">New collaboration post</h2><button type="button" class="btn ghost" id="close-post" aria-label="Close" style="padding:0 12px">✕</button></div>
+    <div><label for="p-name">Name or handle</label><input type="text" id="p-name" maxlength="30" autocomplete="off"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label for="p-sign">Your sign</label><select id="p-sign"></select></div>
+      <div><label for="p-seek">Seeking element</label>
+        <select id="p-seek"><option>Fire</option><option>Earth</option><option>Air</option><option>Water</option></select></div>
+    </div>
+    <div><label for="p-desc">Project or skill offer</label><textarea id="p-desc" rows="3" maxlength="200" placeholder="What are you building?"></textarea></div>
+    <div><label for="p-wa">WhatsApp number (South Africa)</label><input type="text" id="p-wa" inputmode="tel" placeholder="e.g. 071 234 5678"></div>
+    <label class="chk"><input type="checkbox" id="p-ok"><span>I understand my number will be visible to anyone who opens this board and I agree to that.</span></label>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn" type="submit">Publish listing</button>
+  </form>
+</div>
+
+<footer>Zodiac Synergy Matcher · For entertainment only</footer>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,signInAnonymously,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,addDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAuHSKjjv-9ynHEyzpV2bHkl78lcr3ugW8",
+  authDomain: "logistics-jobs-sa.firebaseapp.com",
+  projectId: "logistics-jobs-sa",
+  storageBucket: "logistics-jobs-sa.firebasestorage.app",
+  messagingSenderId: "1005267266531",
+  appId: "1:1005267266531:web:d6fbf0f02dce8310800ed6"
+};
+
+const Z=[["Aries","♈","Fire","Cardinal"],["Taurus","♉","Earth","Fixed"],["Gemini","♊","Air","Mutable"],["Cancer","♋","Water","Cardinal"],["Leo","♌","Fire","Fixed"],["Virgo","♍","Earth","Mutable"],["Libra","♎","Air","Cardinal"],["Scorpio","♏","Water","Fixed"],["Sagittarius","♐","Fire","Mutable"],["Capricorn","♑","Earth","Cardinal"],["Aquarius","♒","Air","Fixed"],["Pisces","♓","Water","Mutable"]];
+const EM={Fire:"🔥",Earth:"⛰️",Air:"💨",Water:"💧"};
+const $=id=>document.getElementById(id);
+const zf=n=>Z.find(z=>z[0]===n)||Z[0];
+
+/* ---------- Analyzer ---------- */
+const PAIRS={
+ "Air,Fire":[94,"Vision & Spark","Air feeds Fire instantly. Great for rapid brainstorming, digital campaigns and high-energy content.","Turn big ideas into dated timelines so the momentum doesn’t fizzle out."],
+ "Earth,Water":[92,"Grounded Growth","Earth provides the container while Water brings intuition and depth. Strong for long-term projects and steady execution.","Don’t let stability become stagnation. Leave room for spontaneous pivots."],
+ "Air,Earth":[74,"Dynamic Contrast","Air’s ideas meet Earth’s practicality. Slower to sync, but plans end up both creative and workable.","Agree who owns ideas and who owns delivery before you start."],
+ "Earth,Fire":[73,"Dynamic Contrast","Fire wants to move now, Earth wants to plan first. Friction can sharpen the result.","Set a short planning window, then let Fire run."],
+ "Air,Water":[71,"Dynamic Contrast","Air thinks out loud while Water feels its way through. Different processing speeds need patience.","Check in on how things feel, not just what is being decided."],
+ "Fire,Water":[70,"Dynamic Contrast","Fire’s drive and Water’s sensitivity can clash or complement, depending on how feedback is given.","Keep feedback specific and kind, and pace the intensity."]
+};
+function calc(a,b){
+  let s,t,d,tip;
+  if(a[2]===b[2]){s=90;t="Elemental Amplification";d=`Two ${a[2]} signs share a pace and instinct, so communication is nearly effortless.`;tip="Shared blind spots are the risk. Ask an outsider for feedback before big decisions."}
+  else{[s,t,d,tip]=PAIRS[[a[2],b[2]].sort().join()]}
+  let m;
+  if(a[3]===b[3]){s-=2;m=`Both ${a[3]}: you may compete for the same role, so assign roles up front.`}
+  else{s+=3;m=`${a[3]} and ${b[3]} split the work naturally (Cardinal starts, Fixed sustains, Mutable adapts).`}
+  s=Math.min(99,s);
+  const badge=s>=95?"High momentum":s>=88?"Strong flow":s>=80?"Steady match":"Growth pairing";
+  return{s,t,d,tip,m,badge};
+}
+function card(z,g,t,sub){$(g).textContent=EM[z[2]];$(t).textContent=z[1]+" "+z[0];$(sub).textContent=z[2]+" element · "+z[3]}
+function update(){
+  const a=zf($("sign-a").value),b=zf($("sign-b").value),r=calc(a,b);
+  card(a,"ga","ta","sa");card(b,"gb","tb","sb");
+  $("pct").textContent=r.s+"%";$("rtitle").textContent=r.t;$("badge").textContent=r.badge;
+  $("rbody").textContent=r.d;$("rmod").textContent=r.m;$("rtip").textContent=r.tip;
+}
+
+/* ---------- Firebase ---------- */
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const COL="zodiacListings";
+let uid=null,posts=[],filter="All";
+const setStatus=m=>{$("status").textContent=m};
+
+onAuthStateChanged(auth,u=>{uid=u?u.uid:null;renderList()});
+signInAnonymously(auth).catch(()=>setStatus("Couldn’t connect. Check your internet and reload."));
+onSnapshot(query(collection(db,COL),orderBy("createdAt","desc"),limit(50)),
+  snap=>{posts=snap.docs.map(d=>({id:d.id,...d.data()}));setStatus("");renderList()},
+  ()=>setStatus("Couldn’t load listings. Check your internet, or the Firestore rules."));
+
+/* ---------- Board ---------- */
+function normWa(v){
+  let d=String(v).replace(/\D/g,"");
+  if(d.startsWith("0027"))d=d.slice(2);
+  else if(d.startsWith("0"))d="27"+d.slice(1);
+  return /^27\d{9}$/.test(d)?d:null;
+}
+function h(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+
+function renderPills(){
+  const box=$("pills");box.textContent="";
+  ["All","Air","Fire","Earth","Water"].forEach(f=>{
+    const b=h("button","pill",f);b.type="button";b.setAttribute("aria-pressed",String(f===filter));
+    b.onclick=()=>{filter=f;renderPills();renderList()};box.appendChild(b);
+  });
+}
+function renderList(){
+  const box=$("list");box.textContent="";
+  const all=posts.filter(l=>filter==="All"||zf(l.sign)[2]===filter||l.seeking===filter);
+  if(!all.length){box.appendChild(h("div","card mute","No listings yet. Be the first to post."));return}
+  all.forEach(l=>{
+    const c=h("div","card");
+    const top=h("div","row"),left=h("div");
+    const sg=h("span",null," ("+l.sign+")");sg.style.color="var(--acc)";
+    const t=h("div");t.append(h("strong",null,l.name),sg);
+    left.append(t,h("span","tag","Offering: "+zf(l.sign)[2]+" · Seeking: "+l.seeking));
+    top.append(left,h("span","badge","Partner"));
+    const p=h("p","mute",l.desc);p.style.marginTop="8px";
+    c.append(top,p);
+    const act=h("div","actions");
+    if(uid&&l.uid===uid){
+      const rm=h("button","btn ghost","Remove");rm.type="button";
+      rm.onclick=async()=>{rm.disabled=true;try{await deleteDoc(doc(db,COL,l.id))}catch(e){rm.disabled=false;setStatus("Couldn’t remove that listing.")}};
+      act.appendChild(rm);
+    }
+    const a=h("a","wa");
+    if(/^27\d{9}$/.test(l.wa||"")){
+      a.href="https://wa.me/"+l.wa+"?text="+encodeURIComponent("Hi "+l.name+", I saw your listing on Zodiac Synergy Matcher.");
+      a.target="_blank";a.rel="noopener noreferrer";a.textContent="WhatsApp connect";
+    }else{a.setAttribute("aria-disabled","true");a.textContent="No contact"}
+    act.appendChild(a);c.appendChild(act);box.appendChild(c);
+  });
+}
+
+/* ---------- Tabs & modal ---------- */
+function tab(which){
+  const an=which==="analyzer";
+  $("view-analyzer").hidden=!an;$("view-board").hidden=an;
+  $("tab-analyzer").setAttribute("aria-selected",String(an));
+  $("tab-board").setAttribute("aria-selected",String(!an));
+}
+function openModal(){$("err").textContent="";$("modal").hidden=false;$("p-name").focus()}
+function closeModal(){$("modal").hidden=true;$("open-post").focus()}
+
+async function submit(e){
+  e.preventDefault();
+  const name=$("p-name").value.trim(),desc=$("p-desc").value.trim(),wa=normWa($("p-wa").value);
+  const err=m=>{$("err").textContent=m};
+  if(!name||!desc)return err("Please add your name and a short project description.");
+  if(!wa)return err("Enter a valid South African number, like 071 234 5678.");
+  if(!$("p-ok").checked)return err("Please tick the box to confirm your number can be shown.");
+  if(!uid)return err("Still connecting. Try again in a moment.");
+  const btn=$("post-form").querySelector("button[type=submit]");btn.disabled=true;
+  try{
+    await addDoc(collection(db,COL),{name,sign:$("p-sign").value,seeking:$("p-seek").value,desc,wa,uid,createdAt:serverTimestamp()});
+    ["p-name","p-desc","p-wa"].forEach(i=>$(i).value="");$("p-ok").checked=false;
+    filter="All";renderPills();renderList();closeModal();tab("board");
+  }catch(x){err("Couldn’t post. Check your internet and try again.")}
+  finally{btn.disabled=false}
+}
+
+/* ---------- Init ---------- */
+Z.forEach(z=>{
+  $("sign-a").add(new Option(`${z[1]} ${z[0]} (${z[2]})`,z[0]));
+  $("sign-b").add(new Option(`${z[1]} ${z[0]} (${z[2]})`,z[0]));
+  $("p-sign").add(new Option(`${z[1]} ${z[0]}`,z[0]));
+});
+$("sign-a").value="Gemini";$("sign-b").value="Sagittarius";
+$("sign-a").onchange=$("sign-b").onchange=update;
+$("tab-analyzer").onclick=()=>tab("analyzer");
+$("tab-board").onclick=()=>tab("board");
+$("open-post").onclick=openModal;$("close-post").onclick=closeModal;
+$("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("modal").hidden)closeModal()});
+$("post-form").addEventListener("submit",submit);
+update();renderPills();renderList();
+</script>
+</body>
+</html>
